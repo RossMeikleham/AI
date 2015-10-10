@@ -7,8 +7,10 @@ Processes a file containing a list of sound samples taken over
 - gnuplot
 
 ##Building
+either execute build.sh or manually from the command line enter:
 ````
 cabal configure
+cabal install --only-dependencies
 cabal build
 ```
 
