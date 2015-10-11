@@ -1,4 +1,3 @@
-
 import Data.Maybe
 import System.IO
 import Graphics.EasyPlot 
@@ -15,28 +14,55 @@ samplingRate samples = fromIntegral (length samples) /
 
 -- Apply ideal operator delay to a list of samples (S[n]) for 
 -- a delay of m ms
-idealOperatorDelay :: [Int] -> Int -> Maybe [Int]
-idealOperatorDelay samples 0 = Just samples --Delaying by 0 ms gives back the same sample
+idealOperatorDelay :: [Int] -> Int -> [Int]
+idealOperatorDelay samples 0 = samples --Delaying by 0 ms gives back the same sample
 idealOperatorDelay samples ms =  
-    if (samplingTime `mod` ms == 0) && (length samples `mod` offsetRate == 0)  
         -- Remove last n ms from samples
         -- Pad the front n ms with samples containing 0 
-        then Just $ take offset (repeat 0) ++ 
-                    take (length samples - offset) samples 
-
-        else Nothing
+        take n (repeat 0) ++ 
+            take (length samples - n) samples 
     where 
-          offsetRate = (samplingTime `div` ms)
-          offset = (length samples) `div` offsetRate  --Number of samples to "delay"
+          samplesPerMs = (length samples `div` samplingTime)
+          n = samplesPerMs * ms 
 
 
--- Apply moving average with k1, k2 to a given list of signals
---movingAverage :: [Int] -> Int -> Int -> Maybe [Int]
---movingAverage signals k1 k2 = 
 
+
+-- Apply moving average with k1, k2 ms to a given list of signals
+movingAverage :: [Int] -> Int -> Int -> [Double]
+movingAverage samples 0 0 = map fromIntegral samples
+movingAverage samples k1 k2 = 
+    map y [0,1..(length samples - 1)]
+    where 
+          samplesPerMs = (length samples `div` samplingTime)
+          nk1 = samplesPerMs * k1
+          nk2 = samplesPerMs * k2
+
+          y :: Int -> Double
+          y n = let a = max 1 (n - nk1) 
+                    b = min (length samples - 1) (n + nk2)
+                in  fromIntegral (sum $ (take (b - a + 1)) $ drop (a - 1) samples) /
+                    fromIntegral (b - a + 1)
+            
+
+-- Apply convolution with a given list of samples with a window
+-- of given length in miliseconds
+convolute :: [Int] -> Int -> [Int]
+convolute samples win_sz = window 800 --map ((x, y) -> x * y) (zip samples window)
+    
+    where window :: Int -> [Int]
+          window n = let
+            left = take (max 0 (n - win_sz_samples)) $ repeat 0
+            win  = take win_sz_samples $ repeat $ maximum samples
+            right = take (length samples - length left - length win) $ repeat 0
+            in left ++ win ++ right
+
+          win_sz_samples = (length samples `div` samplingTime) * win_sz
+                     
+          
 
 -- Plot samples
-plotSamples :: [Int] -> [(String, [Int])] -> IO ()
+plotSamples :: (Real a, Real b) => [a] -> [(String, [b])] -> IO ()
 plotSamples xs ys = do
     plot X11 $ [Data2D [Title "Sample Data", Style Lines] [] $ points $ normalise xs]
               ++ others
@@ -48,8 +74,12 @@ plotSamples xs ys = do
                             $ points $ normalise $ snd g) (zip ys (map getColor [0..]))
 
         -- Normalise a set of samples between 1.0 and -1.0
-        normalise :: [Int] -> [Double] 
-        normalise = map (\y -> (fromIntegral y) / (fromIntegral $ maximum xs))
+        normalise :: (Real a) => [a] -> [Double] 
+        normalise = map (\y -> (2 * ((realToDouble y) - (realToDouble $ minimum xs))) / 
+                               (realToDouble (maximum xs - minimum xs)) - 1.0)
+
+                        where realToDouble :: (Real a) => a -> Double
+                              realToDouble = fromRational . toRational
 
         -- Generate (x,y) points from a list of samples
         points :: [Double] -> [(Double, Double)] 
@@ -90,8 +120,16 @@ main = do
     -- Calc ideal operator delays for 5, 10, and 15 ms, and plot against
     -- samples
     let iods = map (idealOperatorDelay samples) [5, 10, 15]
-    plotSamples samples $ zip ["5ms delay", "10ms delay", "15ms delay"] (catMaybes iods)
-     
+    plotSamples samples $ zip ["5ms delay", "10ms delay", "15ms delay"] iods
+    
+    -- Calc moving averages for k1=k2=5, 10, and 15ms, and plot against samples
+    let mas = map (\(k1,k2) -> movingAverage samples k1 k2) [(5, 5), (10, 10), (15, 15)]
+    plotSamples samples $ zip ["MA 5ms", "MA 10ms", "MA 15ms"] mas
+   
+    -- Calc convolution for window size of 10ms
+    let cvs = convolute samples 10
+    plotSamples samples [("Window", cvs)]
+
     hClose handle      
 
 
