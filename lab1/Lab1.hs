@@ -1,7 +1,6 @@
 import Data.Maybe
 import System.IO
 import qualified Data.Vector.Unboxed as VU
-import Graphics.EasyPlot 
 
 -- | Sampling time for all samples in milliseconds
 samplingTime :: Int
@@ -68,47 +67,26 @@ convolute samples win_sz = VU.map y $ VU.fromList [0..(numSamples - 1)]
         numSamples = VU.length samples    
 
 
--- Plot samples
-plotSamples :: (Real a, Real b) => [a] -> [(String, [b])] -> IO ()
-plotSamples xs ys = do
-    plot X11 $ [Data2D [Title "Sample Data", Style Lines] [] $ points $ normalise xs]
-              ++ others
-    return ()
+plotToCsv :: Real a => String -> [a] -> IO ()
+plotToCsv name graph = 
+    writeFile (name ++ ".csv") $ 
+        unlines $ map (\(x, y) -> concat [show x, ",", show y]) $ 
+                      points $ map realToDouble graph
+  where
+    
+    -- Generate (x,y) points from a list of samples
+    points :: [Double] -> [(Double, Double)] 
+    points samples = zip
+                -- x coodinates  
+                (map (\x -> fromIntegral x * 
+                                (fromIntegral samplingTime / 
+                                (fromIntegral $ length samples))
+                     )  [0..]) 
+                 -- y coordinates
+                 samples
 
-    --lotList [] (points (normalise xs))
-    where
-        others = map (\(g,col) -> Data2D [Title (fst g), Style Lines, Color col] [] 
-                            $ points $ normalise $ snd g) (zip ys (map getColor [0..]))
-
-        -- Normalise a set of samples between 1.0 and -1.0
-        normalise :: (Real a) => [a] -> [Double] 
-        normalise = map (\y -> (2 * ((realToDouble y) - (realToDouble $ minimum xs))) / 
-                               (realToDouble (maximum xs - minimum xs)) - 1.0)
-
-                        where realToDouble :: (Real a) => a -> Double
-                              realToDouble = fromRational . toRational
-
-        -- Generate (x,y) points from a list of samples
-        points :: [Double] -> [(Double, Double)] 
-        points samples = zip
-                    -- x coodinates  
-                    (map (\x -> fromIntegral x * 
-                                    (fromIntegral samplingTime / 
-                                    (fromIntegral $ length samples))
-                         )  [0..]) 
-                     -- y coordinates
-                     samples
-
-        -- Select line color from a selection of 7 colors
-        getColor :: Int -> Color
-        getColor n = case n `mod` 7 of
-            0 -> Red
-            1 -> Green
-            2 -> Black
-            3 -> Orange
-            4 -> Yellow
-            5 -> DarkOrange
-            _ -> Cyan
+    realToDouble :: (Real a) => a -> Double
+    realToDouble = fromRational . toRational
 
 
 labFilePath :: String
@@ -137,7 +115,7 @@ main = do
    
     -- Calc convolution for window size of 10ms
     let cvs = convolute (VU.fromList samples) 10
-    plotSamples (VU.toList cvs) [] --  [("Window 10ms", cvs)]
+    plotToCsv "Convolution" (VU.toList cvs) 
 
     hClose handle      
 
