@@ -1,16 +1,19 @@
 import Data.Maybe
 import System.IO
+import qualified Data.Vector.Unboxed as VU
 import Graphics.EasyPlot 
 
 -- | Sampling time for all samples in milliseconds
 samplingTime :: Int
 samplingTime = 300
 
+
 -- | Calculate the sampling rate from a given
 --   list of samples
 samplingRate :: [Int] -> Double
 samplingRate samples = fromIntegral (length samples) / 
                        (fromIntegral (samplingTime) / 1000.0)
+
 
 -- Apply ideal operator delay to a list of samples (S[n]) for 
 -- a delay of m ms
@@ -24,8 +27,6 @@ idealOperatorDelay samples ms =
     where 
           samplesPerMs = (length samples `div` samplingTime)
           n = samplesPerMs * ms 
-
-
 
 
 -- Apply moving average with k1, k2 ms to a given list of signals
@@ -45,21 +46,27 @@ movingAverage samples k1 k2 =
                     fromIntegral (b - a + 1)
             
 
--- Apply convolution with a given list of samples with a window
+-- Apply convolution to a given vector of samples with a window
 -- of given length in miliseconds
-convolute :: [Int] -> Int -> [Int]
-convolute samples win_sz = window 800 --map ((x, y) -> x * y) (zip samples window)
+convolute :: VU.Vector Int -> Int -> VU.Vector Int
+convolute samples win_sz = VU.map y $ VU.fromList [0..(numSamples - 1)]
     
-    where window :: Int -> [Int]
-          window n = let
-            left = take (max 0 (n - win_sz_samples)) $ repeat 0
-            win  = take win_sz_samples $ repeat $ maximum samples
-            right = take (length samples - length left - length win) $ repeat 0
-            in left ++ win ++ right
-
-          win_sz_samples = (length samples `div` samplingTime) * win_sz
-                     
+  where y :: Int -> Int
+        y n = VU.foldl' (+) 0 $ -- Sum the results 
+                VU.map (\k -> (samples VU.! k) * window (n - k)) $ -- s[k] * w[n - k]
+                     VU.fromList [0,1..(min n (numSamples - 1))] -- k values
           
+        win_sz_samples = (numSamples `div` samplingTime) * win_sz
+
+        -- Rectangular Window function, 1 inside the window, 0 outside
+        window :: Int -> Int
+        window n 
+            | (n < 0) = 0 -- Left of window
+            | (n >= win_sz_samples) = 0 -- Right of window
+            | otherwise = 1 -- Inside the Window
+        
+        numSamples = VU.length samples    
+
 
 -- Plot samples
 plotSamples :: (Real a, Real b) => [a] -> [(String, [b])] -> IO ()
@@ -103,8 +110,10 @@ plotSamples xs ys = do
             5 -> DarkOrange
             _ -> Cyan
 
+
 labFilePath :: String
 labFilePath = "laboratory.dat"
+
 
 main :: IO ()
 main = do
@@ -120,15 +129,15 @@ main = do
     -- Calc ideal operator delays for 5, 10, and 15 ms, and plot against
     -- samples
     let iods = map (idealOperatorDelay samples) [5, 10, 15]
-    plotSamples samples $ zip ["5ms delay", "10ms delay", "15ms delay"] iods
+--    plotSamples samples $ zip ["5ms delay", "10ms delay", "15ms delay"] iods
     
     -- Calc moving averages for k1=k2=5, 10, and 15ms, and plot against samples
     let mas = map (\(k1,k2) -> movingAverage samples k1 k2) [(5, 5), (10, 10), (15, 15)]
-    plotSamples samples $ zip ["MA 5ms", "MA 10ms", "MA 15ms"] mas
+--    plotSamples samples $ zip ["MA 5ms", "MA 10ms", "MA 15ms"] mas
    
     -- Calc convolution for window size of 10ms
-    let cvs = convolute samples 10
-    plotSamples samples [("Window", cvs)]
+    let cvs = convolute (VU.fromList samples) 10
+    plotSamples (VU.toList cvs) [] --  [("Window 10ms", cvs)]
 
     hClose handle      
 
