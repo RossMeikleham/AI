@@ -105,8 +105,8 @@ def plotConvolutionData():
     plotGraphs([plotData])
 
     pl.title('Convolution')
-    pl.xlabel("Normalised y[n]")
-    pl.ylabel("Time in Milliseconds")
+    pl.ylabel("Normalised y[n]")
+    pl.xlabel("Time in Milliseconds")
 
     pl.grid(True)
 
