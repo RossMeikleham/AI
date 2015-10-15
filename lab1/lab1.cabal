@@ -21,7 +21,7 @@ executable lab1
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.8, 
-                       vector, 
+                       vector
                      
   ghc-options: -O2
   -- hs-source-dirs:      

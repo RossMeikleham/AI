@@ -97,23 +97,30 @@ main :: IO ()
 main = do
     handle <- openFile labFilePath ReadMode  
     contents <- hGetContents handle
+
     -- Obtain a list of samples (S[n]) as strings from file
     let strSamples = lines contents 
+
     -- Convert samples to integers
     let samples = map (\s -> (read s :: Int)) strSamples 
+
     -- Calculate sampling rate 
     putStr $ "Sampling rate is: " ++ (show  $ samplingRate samples) ++ "Hz\n"
     
-    -- Calc ideal operator delays for 5, 10, and 15 ms, and plot against
-    -- samples
+    -- Generate CSV file of original data
+    plotToCsv "Laboratory" samples
+
+    -- Calc ideal operator delays for 5, 10, and 15 ms, and generate CSV
+    -- files
     let iods = map (idealOperatorDelay samples) [5, 10, 15]
---    plotSamples samples $ zip ["5ms delay", "10ms delay", "15ms delay"] iods
+    mapM_ (uncurry plotToCsv) $ zip ["Delay5", "Delay10", "Delay15"] iods
     
-    -- Calc moving averages for k1=k2=5, 10, and 15ms, and plot against samples
+    -- Calc moving averages for k1=k2=5, 10, and 15ms, and generate 
+    -- CSV files
     let mas = map (\(k1,k2) -> movingAverage samples k1 k2) [(5, 5), (10, 10), (15, 15)]
---    plotSamples samples $ zip ["MA 5ms", "MA 10ms", "MA 15ms"] mas
+    mapM_ (uncurry plotToCsv) $ zip ["MAverage5", "MAverage10", "MAverage15"] mas
    
-    -- Calc convolution for window size of 10ms
+    -- Calc convolution for window size of 10ms, and generate CSV file
     let cvs = convolute (VU.fromList samples) 10
     plotToCsv "Convolution" (VU.toList cvs) 
 

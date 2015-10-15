@@ -3,24 +3,107 @@ import matplotlib.pyplot as pl
 import numpy as np
 
 # Normalise a list of samples between 1.0 and -1.0
-def normalise(data):
-    minV = min(data)
-    maxV = max(data)
+def normalise(data, minV = None, maxV = None):
+    
+    if minV is None:
+        minV = min(data)
+    
+    if maxV is None:
+        maxV = max(data)
 
     def normaliseItem(item):
         return ((2.0 * (item - minV)) / (maxV - minV)) - 1.0
         
 
     return [normaliseItem(i) for i in data]
+
+
+# Takes a list of dictionaries containing information on the files
+# to plot and information on how they should be plotted, and plots
+# them. Returns a list of handles of the plotted graphs
+def plotGraphs(plots, minY = None, maxY = None):
+
+    for plot in plots:
+        data = np.loadtxt(plot["fileName"], delimiter=",")
+        dxs = data[:,0]
+        dys = data[:,1]
+
+        pl.plot(dxs, normalise(dys, minY, maxY), 
+            color = plot["color"], label = plot["label"])
+        
+        # Normalise everything in relation to the first graph if 
+        # missing max/min arg
+        if minY is None:
+            minY = min(dys)
+
+        if maxY is None:
+            maxY = max(dys)
+
+        
+
+
+def plotOriginal():
     
+    plotData = {"fileName": "Laboratory.csv", "color": "red", "label":""}
+    plotGraphs([plotData])
+
+    pl.title('Samples')
+    pl.xlabel("Normalised S[n]")
+    pl.ylabel("Time in Milliseconds")
+
+    pl.grid(True)
+
+    pl.show()
+
+
+
+
+def plotIdealDelay():
+    
+    plotsData = [{"fileName": "Laboratory.csv", "color": "red", "label": "Signal"},
+                 {"fileName": "Delay5.csv", "color": "green", "label": "5ms Window"},
+                 {"fileName": "Delay10.csv", "color": "blue", "label": "10ms Window"},
+                 {"fileName": "Delay15.csv", "color": "black", "label": "15ms Window"}
+                ]
+
+    plotGraphs(plotsData)
+
+    pl.title('Ideal Delay')
+    pl.ylabel("Normalised S[n]")
+    pl.xlabel("Time in Milliseconds")
+    pl.legend()
+
+    pl.grid(True)
+
+    pl.show()
+
+
+def plotMovingAverage():
+    
+    plotsData = [{"fileName": "Laboratory.csv", "color": "red", "label": "Signal"},
+                 {"fileName": "MAverage5.csv", "color": "green", "label": "MA 5ms"},
+                 {"fileName": "MAverage10.csv", "color": "blue", "label": "MA 10ms"},
+                 {"fileName": "MAverage15.csv", "color": "black", "label": "MA 15ms"}
+                ]
+    
+    plotGraphs(plotsData)
+
+    pl.title('Moving Average')
+    pl.ylabel("Normalised S[n]")
+    pl.xlabel("Time in Milliseconds")
+    pl.legend()
+
+    pl.grid(True)
+
+    pl.show()
+
 
 def plotConvolutionData():
-    convolutionData = np.loadtxt("Convolution.csv", delimiter=',')
-    xs = convolutionData[:,0]
-    ys = convolutionData[:,1]
-    nys = normalise(ys)
+    
+    plotData = {"fileName": "Convolution.csv", "color": "red", "label": "Signal"}
 
-    pl.plot(xs, nys)
+    plotGraphs([plotData])
+
     pl.title('Convolution')
     pl.xlabel("Normalised y[n]")
     pl.ylabel("Time in Milliseconds")
@@ -31,6 +114,9 @@ def plotConvolutionData():
 
 
 def main():
+    plotOriginal()
+    plotIdealDelay()
+    plotMovingAverage()
     plotConvolutionData()
 
 main()
