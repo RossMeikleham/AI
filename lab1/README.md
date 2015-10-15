@@ -29,3 +29,18 @@ Then plot the data using the python program:
 ```
 python plotting.py
 ``` 
+
+#Graphs
+
+##Original Signals
+![signals](/images/samples.png?raw=true)
+
+##Ideal Delay Applied to original Signals
+![idealDelay](/images/idealDelay.png?raw=true)
+
+##Moving Averages Applied to original Signals
+![movingAverage](/images/movingAverage?raw=true)
+
+##Convolution of 10ms window applied to original Signals
+![signals](/images/convolution.png?raw=true)
+
