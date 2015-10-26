@@ -113,7 +113,23 @@ def plotConvolutionData():
     pl.show()
 
 
+def plotEnergy():
+    
+    plotsData = [ 
+                 {"fileName": "Energy.csv", "color": "red", "label": "Energy 30ms"}
+                ]
+    
+    plotGraphs(plotsData)
+
+    pl.title("Short Term Energy")
+    pl.ylabel("Normalised E[n]")
+    pl.xlabel("Time in Milliseconds")
+
+    pl.grid(True)
+    pl.show()
+
 def main():
+    plotEnergy()
     plotOriginal()
     plotIdealDelay()
     plotMovingAverage()
