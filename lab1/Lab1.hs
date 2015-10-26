@@ -89,6 +89,42 @@ energy samples win_sz = VU.map e $ VU.fromList [0..(numSamples - 1)]
         numSamples = VU.length samples    
 
 
+-- Calculate magnitude for a given vector of samples with a window
+-- of given length in milliseconds
+magnitude :: VU.Vector Int -> Int -> VU.Vector Double
+magnitude samples win_sz = VU.map m $ VU.fromList [0..(numSamples - 1)]
+    
+  where m :: Int -> Double
+        m n = (fromIntegral $ sumRes n) / (fromIntegral win_sz_samples) -- sum(|s[k]| * w[n-k])/N
+        
+        sumRes n = VU.foldl'(+) 0 $ -- Sum results
+                        VU.map (\k -> ((abs (samples VU.! k))) * (rectWindow win_sz_samples (n - k))) $ -- |s[k]| * w[n-k]
+                            VU.fromList [(max (n - win_sz_samples + 1) 0) .. (min n (numSamples - 1))] -- k Values
+
+        -- Number of samples in the Window of win_sz milliseconds 
+        win_sz_samples = (numSamples `div` samplingTime) * win_sz
+        -- Total number of samples supplied to the convolution function
+        numSamples = VU.length samples    
+
+
+-- Calculate zero crossing rate for a given vector of samples with a window
+-- of given length in milliseconds
+zeroCrossingRate :: VU.Vector Int -> Int -> VU.Vector Double
+zeroCrossingRate samples win_sz = VU.map m $ VU.fromList [0..(numSamples - 1)]
+    
+  where m :: Int -> Double
+        m n = (fromIntegral $ sumRes n) / (2 * (fromIntegral win_sz_samples)) -- sum(|s[k]| * w[n-k])/N
+        
+        sumRes n = VU.foldl'(+) 0 $ -- Sum results
+                        VU.map (\k -> (abs (signum (samples VU.! k) - (signum (samples VU.! (k - 1))))) * 
+                                      (rectWindow win_sz_samples (n - k))) $ -- |sgn(s[k]) - sgn(s[k-1])| * w[n-k]
+                            VU.fromList [(max (n - win_sz_samples + 1) 1) .. (min n (numSamples - 1))] -- k Values
+
+        -- Number of samples in the Window of win_sz milliseconds 
+        win_sz_samples = (numSamples `div` samplingTime) * win_sz
+        -- Total number of samples supplied to the convolution function
+        numSamples = VU.length samples    
+
 
 -- Write Samples to CSV file
 plotToCsv :: Real a => String -> [a] -> IO ()
@@ -152,8 +188,14 @@ main = do
     let ste = energy (VU.fromList samples) 30
     plotToCsv "Energy" (VU.toList ste)
 
+    -- Calc short term magnitude for 30ms, and generate CSV file
+    let md = magnitude (VU.fromList samples) 30
+    plotToCsv "Magnitude" (VU.toList md)
 
-
+    -- Calc short term ZCR for 30s, and generate CSV file
+    let zcr = zeroCrossingRate (VU.fromList samples) 30
+    plotToCsv "ZeroCrossingRate" (VU.toList zcr)
+    
     hClose handle      
 
 

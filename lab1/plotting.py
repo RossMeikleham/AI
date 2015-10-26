@@ -2,7 +2,21 @@
 import matplotlib.pyplot as pl
 import numpy as np
 
-# Normalise a list of samples between 1.0 and -1.0
+# Normalise a list of samples between 1.0 and 0.0
+def positiveNormalise(data, minV = None, maxV = None):
+    if minV is None:
+        minV = min(data)
+
+    if maxV is None:
+        maxV = max(data)
+
+    def normaliseItem(item):
+        return (item - minV) / (maxV - minV)
+
+    return [normaliseItem(i) for i in data]
+
+# Normalise a list of samples between 1.0 and -1.0 if samples vary between 
+# positive and negative, otherwise normalises samples between 1.0 and 0.0
 def normalise(data, minV = None, maxV = None):
     
     if minV is None:
@@ -10,6 +24,10 @@ def normalise(data, minV = None, maxV = None):
     
     if maxV is None:
         maxV = max(data)
+
+    if minV >= 0.0:
+        return positiveNormalise(data, minV, maxV)
+    
 
     def normaliseItem(item):
         return ((2.0 * (item - minV)) / (maxV - minV)) - 1.0
@@ -31,108 +49,27 @@ def plotGraphs(plots, minY = None, maxY = None):
         pl.plot(dxs, normalise(dys, minY, maxY), 
             color = plot["color"], label = plot["label"])
         
-        # Normalise everything in relation to the first graph if 
-        # missing max/min arg
-        if minY is None:
-            minY = min(dys)
-
-        if maxY is None:
-            maxY = max(dys)
-
         
 
 
-def plotOriginal():
-    
-    plotData = {"fileName": "Laboratory.csv", "color": "red", "label":""}
-    plotGraphs([plotData])
 
-    pl.title('Samples')
-    pl.xlabel("Normalised S[n]")
-    pl.ylabel("Time in Milliseconds")
-
-    pl.grid(True)
-
-    pl.show()
-
-
-
-
-def plotIdealDelay():
-    
-    plotsData = [{"fileName": "Laboratory.csv", "color": "red", "label": "Signal"},
-                 {"fileName": "Delay5.csv", "color": "green", "label": "5ms Window"},
-                 {"fileName": "Delay10.csv", "color": "blue", "label": "10ms Window"},
-                 {"fileName": "Delay15.csv", "color": "black", "label": "15ms Window"}
+def plotData():
+    plotData = [{"fileName": "Laboratory.csv", "color":"red", "label":"Original Signal"},
+                {"fileName": "Energy.csv", "color":"green", "label":"Energy 30ms"},
+                {"fileName": "Magnitude.csv", "color":"blue", "label":"Magnitude 30ms"},
+                {"fileName": "ZeroCrossingRate.csv", "color":"cyan", "label":"Zero Crossing Rate 30ms"}
                 ]
-
-    plotGraphs(plotsData)
-
-    pl.title('Ideal Delay')
-    pl.ylabel("Normalised S[n]")
-    pl.xlabel("Time in Milliseconds")
+    
+    plotGraphs(plotData)
+    pl.title('Functions applied to Samples')
+    pl.xlabel("Time ms")
+    pl.ylabel("Normalised signals S[n]")
+    pl.grid(True)
     pl.legend()
-
-    pl.grid(True)
-
     pl.show()
 
-
-def plotMovingAverage():
-    
-    plotsData = [{"fileName": "Laboratory.csv", "color": "red", "label": "Signal"},
-                 {"fileName": "MAverage5.csv", "color": "green", "label": "MA 5ms"},
-                 {"fileName": "MAverage10.csv", "color": "blue", "label": "MA 10ms"},
-                 {"fileName": "MAverage15.csv", "color": "black", "label": "MA 15ms"}
-                ]
-    
-    plotGraphs(plotsData)
-
-    pl.title('Moving Average')
-    pl.ylabel("Normalised S[n]")
-    pl.xlabel("Time in Milliseconds")
-    pl.legend()
-
-    pl.grid(True)
-
-    pl.show()
-
-
-def plotConvolutionData():
-    
-    plotData = {"fileName": "Convolution.csv", "color": "red", "label": "Signal"}
-
-    plotGraphs([plotData])
-
-    pl.title('Convolution')
-    pl.ylabel("Normalised y[n]")
-    pl.xlabel("Time in Milliseconds")
-
-    pl.grid(True)
-
-    pl.show()
-
-
-def plotEnergy():
-    
-    plotsData = [ 
-                 {"fileName": "Energy.csv", "color": "red", "label": "Energy 30ms"}
-                ]
-    
-    plotGraphs(plotsData)
-
-    pl.title("Short Term Energy")
-    pl.ylabel("Normalised E[n]")
-    pl.xlabel("Time in Milliseconds")
-
-    pl.grid(True)
-    pl.show()
 
 def main():
-    plotEnergy()
-    plotOriginal()
-    plotIdealDelay()
-    plotMovingAverage()
-    plotConvolutionData()
+    plotData()
 
 main()
