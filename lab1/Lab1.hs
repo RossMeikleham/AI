@@ -60,9 +60,13 @@ convolute :: VU.Vector Int -> Int -> VU.Vector Int
 convolute samples win_sz = VU.map y $ VU.fromList [0..(numSamples - 1)]
     
   where y :: Int -> Int
-        y n = VU.foldl' (+) 0 $ -- Sum the results 
-                VU.map (\k -> (samples VU.! k) * (rectWindow win_sz_samples (n - k))) $ -- s[k] * w[n - k]
-                     VU.fromList [(max (n - win_sz_samples + 1) 0) .. (min n (numSamples - 1))] -- k values
+        y n = VU.foldl' (+) 0 $ -- Sum the results
+                -- s[k] * w[n - k] 
+                VU.map (\k -> (samples VU.! k) * 
+                              (rectWindow win_sz_samples (n - k))) $ 
+                     -- k values
+                     VU.fromList [(max (n - win_sz_samples + 1) 0) .. 
+                                  (min n (numSamples - 1))] -- k values
           
         -- Number of samples in the Window of win_sz milliseconds 
         win_sz_samples = (numSamples `div` samplingTime) * win_sz
@@ -76,12 +80,17 @@ energy :: VU.Vector Int -> Int -> VU.Vector Double
 energy samples win_sz = VU.map e $ VU.fromList [0..(numSamples - 1)]
     
   where e :: Int -> Double
-        e n = (fromIntegral $ sumRes n) / (fromIntegral win_sz_samples) -- sum(s[k]^2 * w[n-k])/N
+        -- sum(s[k]^2 * w[n-k])/N
+        e n = (fromIntegral $ sumRes n) / (fromIntegral win_sz_samples) 
         
         sumRes :: Int -> Int
         sumRes n = VU.foldl'(+) 0 $ -- Sum results
-                        VU.map (\k -> ((samples VU.! k) ^ 2) * (rectWindow win_sz_samples (n - k))) $ -- s[k]^2 * w[n-k]
-                            VU.fromList [(max (n - win_sz_samples + 1) 0) .. (min n (numSamples - 1))] -- k Values
+                    -- s[k]^2 * w[n-k]
+                    VU.map (\k -> ((samples VU.! k) ^ 2) * 
+                                   (rectWindow win_sz_samples (n - k))) $ 
+                            -- k values
+                            VU.fromList [(max (n - win_sz_samples + 1) 0) .. 
+                                              (min n (numSamples - 1))] 
 
         -- Number of samples in the Window of win_sz milliseconds 
         win_sz_samples = (numSamples `div` samplingTime) * win_sz
@@ -95,11 +104,16 @@ magnitude :: VU.Vector Int -> Int -> VU.Vector Double
 magnitude samples win_sz = VU.map m $ VU.fromList [0..(numSamples - 1)]
     
   where m :: Int -> Double
-        m n = (fromIntegral $ sumRes n) / (fromIntegral win_sz_samples) -- sum(|s[k]| * w[n-k])/N
+        -- sum(|s[k]| * w[n-k])/N
+        m n = (fromIntegral $ sumRes n) / (fromIntegral win_sz_samples) 
         
         sumRes n = VU.foldl'(+) 0 $ -- Sum results
-                        VU.map (\k -> ((abs (samples VU.! k))) * (rectWindow win_sz_samples (n - k))) $ -- |s[k]| * w[n-k]
-                            VU.fromList [(max (n - win_sz_samples + 1) 0) .. (min n (numSamples - 1))] -- k Values
+                      -- |s[k]| * w[n-k]
+                      VU.map (\k -> ((abs (samples VU.! k))) * 
+                                    (rectWindow win_sz_samples (n - k))) $ 
+                            -- k values
+                            VU.fromList [(max (n - win_sz_samples + 1) 0) .. 
+                                         (min n (numSamples - 1))] 
 
         -- Number of samples in the Window of win_sz milliseconds 
         win_sz_samples = (numSamples `div` samplingTime) * win_sz
@@ -113,12 +127,17 @@ zeroCrossingRate :: VU.Vector Int -> Int -> VU.Vector Double
 zeroCrossingRate samples win_sz = VU.map m $ VU.fromList [0..(numSamples - 1)]
     
   where m :: Int -> Double
-        m n = (fromIntegral $ sumRes n) / (2 * (fromIntegral win_sz_samples)) -- sum(|s[k]| * w[n-k])/N
+        -- sum(|s[k]| * w[n-k])/N
+        m n = (fromIntegral $ sumRes n) / (2 * (fromIntegral win_sz_samples)) 
         
         sumRes n = VU.foldl'(+) 0 $ -- Sum results
-                        VU.map (\k -> (abs (signum (samples VU.! k) - (signum (samples VU.! (k - 1))))) * 
-                                      (rectWindow win_sz_samples (n - k))) $ -- |sgn(s[k]) - sgn(s[k-1])| * w[n-k]
-                            VU.fromList [(max (n - win_sz_samples + 1) 1) .. (min n (numSamples - 1))] -- k Values
+                      -- |sgn(s[k] - sgn(s[k-1])| * w[n-k]
+                     VU.map (\k -> (abs (signum (samples VU.! k) - 
+                                        (signum (samples VU.! (k - 1))))) * 
+                                        (rectWindow win_sz_samples (n - k))) $ 
+                            -- k values
+                            VU.fromList [(max (n - win_sz_samples + 1) 1) .. 
+                                         (min n (numSamples - 1))] 
 
         -- Number of samples in the Window of win_sz milliseconds 
         win_sz_samples = (numSamples `div` samplingTime) * win_sz
