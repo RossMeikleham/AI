@@ -25,6 +25,12 @@ getSamples fPath = do
 
     return samples
 
+writeDat :: String -> [Double] -> IO ()
+writeDat fName signals = writeFile (fName ++ ".dat") $
+                            unlines $ map show signals
+    
+
+
 main :: IO ()
 main = do
     -- Obtain absolute paths to all files in the given folder
@@ -38,12 +44,19 @@ main = do
     samples <- mapM getSamples sampleFiles
     print $ length samples
 
-    -- Average Short Term Energy 
-    let st_energies = map (\m -> energy (VU.fromList m) win_sz_ms) samples :: [VU.Vector Double]
-    let sum_st_energies = map (VU.foldl' (+) 0)  st_energies
-    let avg_st_energies = map (/ (fromIntegral $ length st_energies)) sum_st_energies
-    putStrLn "done"
+    -- Log of Average Short Term Energy
+    let log_avg_e = logAverageSig samples win_sz_ms energy
+    writeDat "log_avg_ste" log_avg_e
+     
+    -- Log of Average Short Term Magnitude Signal
+    let log_avg_mtude = logAverageSig samples win_sz_ms magnitude
+    writeDat "log_avg_stm" log_avg_mtude
 
+    -- Average Zero Crossing Rate Signal
+    let avg_zcr = averageSig samples win_sz_ms zeroCrossingRate
+    writeDat "avg_zcr" avg_zcr
+
+    putStrLn "done"
     where 
         win_sz_ms = 15
 
