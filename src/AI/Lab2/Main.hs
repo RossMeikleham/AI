@@ -39,22 +39,30 @@ main = do
 
     -- Filter to obtain paths for only the sample files
     let sampleFiles = filter (isSuffixOf ".dat") folderFiles
+    let speechSampleFiles = filter (isPrefixOf "speech") sampleFiles
+    let silenceSampleFiles = filter (isPrefixOf "silence") sampleFiles
 
     -- Extract samples from all the files
-    samples <- mapM getSamples sampleFiles
+    speechSamples <- mapM getSamples speechSampleFiles
+    silenceSamples <- mapM getSamples silenceSampleFiles
+
+    let samples = speechSamples ++ silenceSamples
     print $ length samples
 
     -- Log of Average Short Term Energy
-    let log_avg_e = logAverageSig samples win_sz_ms energy
-    writeDat "log_avg_ste" log_avg_e
+    let logAvgEngery = logAverageSig samples win_sz_ms energy
+    writeDat "log_avg_ste" logAvgEnergy
      
     -- Log of Average Short Term Magnitude Signal
-    let log_avg_mtude = logAverageSig samples win_sz_ms magnitude
-    writeDat "log_avg_stm" log_avg_mtude
+    let logAvgMtude = logAverageSig samples win_sz_ms magnitude
+    writeDat "log_avg_stm" logAvgMtude
 
     -- Average Zero Crossing Rate Signal
-    let avg_zcr = averageSig samples win_sz_ms zeroCrossingRate
-    writeDat "avg_zcr" avg_zcr
+    let avgZCR = averageSig samples win_sz_ms zeroCrossingRate
+    writeDat "avg_zcr" avgZCR
+
+    speechSplits <- splitK 5 speechSamples
+    silenceSplits <- splitK 5 silenceSamples
 
     putStrLn "done"
     where 
