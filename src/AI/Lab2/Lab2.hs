@@ -1,69 +1,104 @@
-{-#Language GADTs #-}
-{-#Language ScopedTypeVariables #-}
 module AI.Lab2.Lab2 where
 
 import System.Random
 import Data.List
-import Control.Applicative
 import qualified Data.Vector.Unboxed as VU
 
+-- Sample Data either involves speech
+-- or is silent
 data SoundType = Speech | Silence
+    deriving (Eq, Show)
 
-data SampleData a where
-    MkSampleData :: a -> a -> a -> SampleData a
-
-
--- Functor instance for SampleData
-instance Functor SampleData where
-    fmap f (MkSampleData e m z) = MkSampleData (f e) (f m) (f z)
-
--- Applicative Functor instance for SampleData
-instance Applicative SampleData where
-    pure a = MkSampleData a a a
-    MkSampleData f1 f2 f3 <*> MkSampleData e m z = MkSampleData (f1 e) (f2 m) (f3 z)
+-- Type alias for 
+type SampleData = ([Double], SoundType)
 
 
--- Calculate mean of SampleData
-mean :: (Applicative f) => [f Double] -> f Double
-mean [] = pure 0
-mean xs = meanSampleData
-    where sumSampleData = foldl' (\a b -> (+) <$> a <*> b) (pure 0) xs
-          meanSampleData = (/ fromIntegral (length xs)) <$> sumSampleData
+loss :: SoundType -> SoundType -> Double
+loss expected actual 
+    | expected == actual = 0
+    | otherwise          = 1
 
 
--- Calculate variance of SampleData
-variance :: forall f. (Applicative f) => [f Double] -> f Double
-variance [] = pure 0 
-variance xs = variance'
-          -- sum(i -> N) (xi - mean x) ^2
-    where sumVar = foldl' (\a b -> (+) <$> a <*> minMeanSq b) (pure 0) xs
-          -- 1/N (sum(i -> N) (xi - mean x) ^2
-          variance' = (/ fromIntegral (length xs)) <$> sumVar  
-
-          -- (xi - (mean x)^2
-          minMeanSq :: f Double -> f Double
-          minMeanSq sd = fmap (^2) $ (-) <$> sd <*> mean xs
+-- Calculate mean of a given feature
+mean :: [Double] -> Double
+mean [] = 0
+mean xs = (sum xs) / (fromIntegral $ length xs)
 
 
--- Generates gaussian discriminant functions given the mean and variance
-gaussianDiscriminant :: forall f. (Applicative f) => 
-                        f Double -> f Double -> (f Double -> f Double)
-gaussianDiscriminant mu var = univariateGaussian
-    where    
-        
-        -- Generate Univatiate Gaussian Function from given means and
-        -- variances from Sample Data
-        univariateGaussian :: f Double -> f Double
-        univariateGaussian x = (/) <$> left <*> right
-            where 
-                  left = sqrt <$> ((\v -> 2 * pi * sqrt v) <$> var)  -- sqrt (2 * pi * sigma)
-                  right = exp <$> ( (/) <$> rightNum <*> rightDenom) 
-                  xMinMean = (-) <$> x <*> mu -- (x - mu)
-                  rightNum = (\v -> - (v^2)) <$> xMinMean -- - (x - mu)^2
-                  rightDenom = (\v -> 2 * v^2) <$> var -- 2 * sigma^2
+-- Calculate variance of a given feature
+variance :: [Double] -> Double
+variance [] = 0
+variance xs = (1 / sz) * (sum $ map (\x -> (x - mu)^2) xs)  
+    where 
+          sz :: Double
+          sz = fromIntegral $ length xs
+          
+          mu :: Double
+          mu = mean xs
 
 
--- Given a list of list of signals, a window length and a function which
+
+-- Computes univariate gaussian from given mean and variance
+univariateGaussian :: Double -> Double -> Double -> Double
+univariateGaussian mu var x = right / left
+    where left = sqrt (2 * pi * var)
+          right = exp $ - ((x - mu)^2 / (2 * var))
+       
+
+-- Calculates gaussian discriminant for univariate gaussian
+gaussianDiscriminant :: Double -> Double -> Double -> Double
+gaussianDiscriminant mu var x = - log(sqrt(2 * pi * var)) -
+                                ((x - mu)^2 / (2 * var)) +
+                                log(univariateGaussian mu var x)
+
+
+
+-- Calculates the log of the discriminant function for a given SoundType decision.
+probability :: SoundType -> [SampleData] -> ([Double] -> Double)
+probability st trainData values = sum predictors
+    where
+         predictors :: [Double]
+         predictors = map (\(m, v, vals) -> gaussianDiscriminant m v c) $ zip3 means vars values
+         
+         means :: [Double]
+         means = map mean classSamples
+
+         vars :: [Double]
+         vars = map variance classSamples
+         
+         -- Get the sample data which is of the given SoundType
+         classSamples :: [[Double]]
+         classSamples = transpose $ map fst $ filter (\(values, st') -> st == st') trainData
+
+
+-- Calculate average loss over the test set after training gaussian
+-- discriminant functions with the train set.
+averageLoss :: [SampleData] -> [SampleData] -> Double
+averageLoss trainData testData = (sum $ map (uncurry loss . predict) testData) / (fromIntegral $ length testData)
+    where
+        classPredictors :: [(SoundType, [Double] -> Double)]
+        classPredictors = map (\st -> (st, generatePredictor st trainData)) [Speech, Silence]
+
+        predict :: SampleData -> (SoundType, SoundType)
+        predict (features, st) = (predictSt, st)
+          
+          -- Select the class with the largest discriminant
+          where (predictSt, _) = 
+                  foldl1 (\(st1, p1) (st2, p2) -> if p2 > p1
+                                                  then (st2, p2)
+                                                  else (st1, p1)
+                       ) $ 
+                       map (\(st', predictFn) -> (st', predictFn features)) classPredictors 
+
+
+-- Calculate Average loss using cross validation given all test/training sets
+cvAverageLoss :: [([SampleData], [SampleData])] -> Double
+cvAverageLoss sets = 
+    (sum $ map (\(trainData, testData) -> averageLoss trainData testData) sets) /
+    (fromIntegral $ length sets)
+
+
+-- Given a list of signals, a window length and a function which
 -- takes a list of signals and that window lenth and transforms the signal;
 -- this function takes the average of the transformation on the signals
 averageSig :: [[Int]] -> Int -> (VU.Vector Int -> Int -> VU.Vector Double) -> [Double]
@@ -80,7 +115,6 @@ averageSig signals ms f = avg_f_signals
 logAverageSig :: [[Int]] -> Int -> (VU.Vector Int -> Int -> VU.Vector Double) -> [Double]
 logAverageSig signals ms f = log_avg_f_sig
     where log_avg_f_sig = map log $ averageSig signals ms f -- Take log of signals
-
 
 
 -- Removes kth element from given list, throws an error
@@ -105,7 +139,7 @@ removeRandK xs = removeRandK' ([], xs)
           removeRandK' (rnds, []) _ = return (rnds, [])
           removeRandK' (rnds, xs)  0 = return (rnds, xs)
           removeRandK' (rnds, xs) k = do
-                n <- randomRIO (0, length xs)
+                n <- randomRIO (0, length xs - 1)
                 let (elem, xs') = removeK xs n 
                 removeRandK' (elem : rnds, xs') (k - 1)
 
@@ -124,7 +158,7 @@ splitK xs k =
     where 
           splitK' :: ([[a]], [a]) -> Int -> IO [[a]]
           splitK' (splits, []) 0 = return splits
-          splitK' (splits, xs) k = do 
+          splitK' (splits, xs) k = do
             (set, leftOver) <- removeRandK xs (length xs `div` k) 
             splitK' (splits ++ [set], leftOver) (k - 1)
 
@@ -135,7 +169,3 @@ getTrainTest xs =
     map (\k -> 
         let (test, train) = removeK xs k 
             in (concat train, test)) [0 .. length xs - 1]
-
-
-
-

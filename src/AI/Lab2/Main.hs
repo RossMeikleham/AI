@@ -8,8 +8,10 @@ import qualified Data.Vector.Unboxed as VU
 import AI.Lab2.Lab2
 import AI.Lab1.Lab1
 
+
 samplesDir :: String
 samplesDir = "samples"
+
 
 -- Obtain samples from file
 getSamples :: String -> IO [Int]
@@ -25,6 +27,9 @@ getSamples fPath = do
 
     return samples
 
+
+-- Given a filename and a list of values, writes
+-- the given values to the file. One per each line.
 writeDat :: String -> [Double] -> IO ()
 writeDat fName signals = writeFile (fName ++ ".dat") $
                             unlines $ map show signals
@@ -39,18 +44,18 @@ main = do
 
     -- Filter to obtain paths for only the sample files
     let sampleFiles = filter (isSuffixOf ".dat") folderFiles
-    let speechSampleFiles = filter (isPrefixOf "speech") sampleFiles
-    let silenceSampleFiles = filter (isPrefixOf "silence") sampleFiles
+    let speechSampleFiles = filter (isInfixOf "speech") sampleFiles
+    let silenceSampleFiles = filter (isInfixOf "silence") sampleFiles
+
 
     -- Extract samples from all the files
     speechSamples <- mapM getSamples speechSampleFiles
     silenceSamples <- mapM getSamples silenceSampleFiles
 
     let samples = speechSamples ++ silenceSamples
-    print $ length samples
 
     -- Log of Average Short Term Energy
-    let logAvgEngery = logAverageSig samples win_sz_ms energy
+    let logAvgEnergy = logAverageSig samples win_sz_ms energy
     writeDat "log_avg_ste" logAvgEnergy
      
     -- Log of Average Short Term Magnitude Signal
@@ -60,12 +65,35 @@ main = do
     -- Average Zero Crossing Rate Signal
     let avgZCR = averageSig samples win_sz_ms zeroCrossingRate
     writeDat "avg_zcr" avgZCR
+    
+    let speechClassifiers = [logAverageSig speechSamples win_sz_ms energy,
+                         logAverageSig speechSamples win_sz_ms magnitude,
+                         averageSig speechSamples win_sz_ms zeroCrossingRate]
 
-    speechSplits <- splitK 5 speechSamples
-    silenceSplits <- splitK 5 silenceSamples
+    let speechData = map (\d -> (d, Speech)) $ transpose speechClassifiers
+    
+    let silenceClassifiers = [logAverageSig silenceSamples win_sz_ms energy,
+                         logAverageSig silenceSamples win_sz_ms magnitude,
+                         averageSig silenceSamples win_sz_ms zeroCrossingRate]
 
-    putStrLn "done"
+    let silenceData = map (\d -> (d, Silence)) $ transpose silenceClassifiers
+
+    -- Randomly split speech and silence data into 10 equally sized disjoint subsets
+    speechSplits <- splitK speechData 10
+    silenceSplits <- splitK silenceData 10
+
+    -- Concatonate each silence and speech splits, obtain the training/test
+    -- sets and calculate the average loss using a 10-fold cross
+    -- validation.
+    let splits = zipWith (++) speechSplits silenceSplits
+
+    let trainTest = getTrainTest splits
+    
+    let avgLoss = cvAverageLoss trainTest
+    
+    print avgLoss 
     where 
         win_sz_ms = 15
+
 
 
