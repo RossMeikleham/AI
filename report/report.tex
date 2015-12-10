@@ -1,0 +1,65 @@
+\documentclass[a4paper]{article}
+
+\usepackage{listings}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{stackengine}
+\usepackage [english]{babel}
+\usepackage [autostyle, english = american]{csquotes}
+\usepackage{courier}
+\usepackage{listings}
+\usepackage{minted}
+
+\lstset{
+  basicstyle=\footnotesize\ttfamily,
+  frame=single,
+  numbers=left,
+  captionpos=b
+}
+
+
+\begin{document}
+
+
+\title{AI Assessed Exercise}
+
+\author{
+       \IEEEauthorblockN{Ross Meikleham}
+       \IEEEauthorblockA{
+            School of Computing Science\\
+            University of Glasgow\\
+            1107023m@student.gla.ac.uk
+        }
+}
+
+
+\appendix
+
+\section{Lab1 Processing Code} (Haskell)
+
+\subsection{Lab1.hs}
+\inputminted{haskell}{../src/AI/Lab1/Lab1.hs}
+
+\subsection{Main.hs}
+\inputminted{haskell}{../src/AI/Lab1/Main.hs}
+
+\section{Lab1 Plotting Code} (Python)
+\inputminted{python}{../src/AI/Lab1/plotting.py}
+
+
+\section{Lab2 Processing Code (Haskell)}
+
+\subsection{Lab2.hs}
+\inputminted{haskell}{../src/AI/Lab2/Lab2.hs}
+
+\subsection{Main.hs}
+\inputminted{haskell}{../src/AI/Lab2/Main.hs}
+
+
+\section{Lab2 Plotting Code (Python)}
+\inputminted{python}{../src/AI/Lab2/plotting.py}
+
+
+
+\end{document}

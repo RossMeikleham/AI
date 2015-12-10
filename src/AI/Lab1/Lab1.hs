@@ -19,7 +19,10 @@ samplingRate samples = fromIntegral (length samples) /
 -- Apply ideal operator delay to a list of samples (S[n]) for 
 -- a delay of m ms
 idealOperatorDelay :: [Int] -> Int -> [Int]
-idealOperatorDelay samples 0 = samples --Delaying by 0 ms gives back the same sample
+
+--Delaying by 0 ms gives back the same sample
+idealOperatorDelay samples 0 = samples 
+
 idealOperatorDelay samples ms =  
         -- Remove last n ms from samples
         -- Pad the front n ms with samples containing 0 
@@ -30,7 +33,8 @@ idealOperatorDelay samples ms =
           n = samplesPerMs * ms 
 
 
--- Apply moving average with k1, k2 ms to a given list of signals
+-- Apply moving average with k1, k2 ms 
+-- to a given list of signals
 movingAverage :: [Int] -> Int -> Int -> [Double]
 movingAverage samples 0 0 = map fromIntegral samples
 movingAverage samples k1 k2 = 
@@ -43,12 +47,14 @@ movingAverage samples k1 k2 =
           y :: Int -> Double
           y n = let a = max 1 (n - nk1) 
                     b = min (length samples - 1) (n + nk2)
-                in  fromIntegral (sum $ (take (b - a + 1)) $ drop (a - 1) samples) /
+                in  fromIntegral (sum $ (take (b - a + 1)) $ 
+                                         drop (a - 1) samples) /
                     fromIntegral (b - a + 1)
             
 
--- Rectangular Window function which takes the size of the window "win_sz"
--- and "n", returns 1 if n is inside the window, 0 otherwise 
+-- Rectangular Window function which takes the size of the 
+-- window "win_sz" and "n", returns 1 if n is inside the window, 
+-- 0 otherwise 
 rectWindow :: Int -> Int -> Int
 rectWindow win_sz n
     | n < 0 = 0 -- Left of Window
@@ -59,7 +65,8 @@ rectWindow win_sz n
 -- Apply convolution to a given vector of samples with a window
 -- of given length in milliseconds
 convolute :: VU.Vector Int -> Int -> VU.Vector Int
-convolute samples win_sz = VU.map y $ VU.fromList [0..(numSamples - 1)]
+convolute samples win_sz = 
+            VU.map y $ VU.fromList [0..(numSamples - 1)]
     
   where y :: Int -> Int
         y n = VU.foldl' (+) 0 $ -- Sum the results
@@ -86,12 +93,13 @@ energy samples win_sz = VU.map e $ VU.fromList [0..(numSamples - 1)]
         e n = (fromIntegral $ sumRes n) / (fromIntegral win_sz_samples) 
         
         sumRes :: Int -> Int
-        sumRes n = VU.foldl'(+) 0 $ -- Sum results
-                    -- s[k]^2 * w[n-k]
-                    VU.map (\k -> ((samples VU.! k) ^ 2) * 
-                                   (rectWindow win_sz_samples (n - k))) $ 
-                            -- k values
-                            VU.fromList [(max (n - win_sz_samples + 1) 0) .. 
+        sumRes n = 
+            VU.foldl'(+) 0 $ -- Sum results
+                -- s[k]^2 * w[n-k]
+                VU.map (\k -> ((samples VU.! k) ^ 2) * 
+                       (rectWindow win_sz_samples (n - k))) $ 
+                        -- k values
+                        VU.fromList [(max (n - win_sz_samples + 1) 0) .. 
                                               (min n (numSamples - 1))] 
 
         -- Number of samples in the Window of win_sz milliseconds 
@@ -112,9 +120,9 @@ magnitude samples win_sz = VU.map m $ VU.fromList [0..(numSamples - 1)]
         sumRes n = VU.foldl'(+) 0 $ -- Sum results
                       -- |s[k]| * w[n-k]
                       VU.map (\k -> ((abs (samples VU.! k))) * 
-                                    (rectWindow win_sz_samples (n - k))) $ 
-                            -- k values
-                            VU.fromList [(max (n - win_sz_samples + 1) 0) .. 
+                             (rectWindow win_sz_samples (n - k))) $ 
+                          -- k values
+                          VU.fromList [(max (n - win_sz_samples + 1) 0) .. 
                                          (min n (numSamples - 1))] 
 
         -- Number of samples in the Window of win_sz milliseconds 
@@ -126,20 +134,23 @@ magnitude samples win_sz = VU.map m $ VU.fromList [0..(numSamples - 1)]
 -- Calculate zero crossing rate for a given vector of samples with a window
 -- of given length in milliseconds
 zeroCrossingRate :: VU.Vector Int -> Int -> VU.Vector Double
-zeroCrossingRate samples win_sz = VU.map m $ VU.fromList [0..(numSamples - 1)]
+zeroCrossingRate samples win_sz = 
+    VU.map m $ VU.fromList [0..(numSamples - 1)]
     
   where m :: Int -> Double
         -- sum(|s[k]| * w[n-k])/N
-        m n = (fromIntegral $ sumRes n) / (2 * (fromIntegral win_sz_samples)) 
+        m n = (fromIntegral $ sumRes n) / 
+                    (2 * (fromIntegral win_sz_samples)) 
         
         sumRes n = VU.foldl'(+) 0 $ -- Sum results
                       -- |sgn(s[k] - sgn(s[k-1])| * w[n-k]
                      VU.map (\k -> (abs (signum (samples VU.! k) - 
                                         (signum (samples VU.! (k - 1))))) * 
-                                        (rectWindow win_sz_samples (n - k))) $ 
+                                        (rectWindow win_sz_samples (n - k)))
                             -- k values
-                            VU.fromList [(max (n - win_sz_samples + 1) 1) .. 
-                                         (min n (numSamples - 1))] 
+                            $ VU.fromList 
+                                    [(max (n - win_sz_samples + 1) 1) .. 
+                                     (min n (numSamples - 1))] 
 
         -- Number of samples in the Window of win_sz milliseconds 
         win_sz_samples = (numSamples `div` samplingTime) * win_sz

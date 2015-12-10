@@ -19,7 +19,8 @@ main = do
     let samples = map (\s -> (read s :: Int)) strSamples 
 
     -- Calculate sampling rate 
-    putStr $ "Sampling rate is: " ++ (show  $ samplingRate samples) ++ "Hz\n"
+    putStr $ "Sampling rate is: " ++ 
+                (show  $ samplingRate samples) ++ "Hz\n"
     
     -- Generate CSV file of original data
     plotToCsv "Laboratory" samples
@@ -31,8 +32,11 @@ main = do
     
     -- Calc moving averages for k1=k2=5, 10, and 15ms, and generate 
     -- CSV files
-    let mas = map (\(k1,k2) -> movingAverage samples k1 k2) [(5, 5), (10, 10), (15, 15)]
-    mapM_ (uncurry plotToCsv) $ zip ["MAverage5", "MAverage10", "MAverage15"] mas
+    let mas =  map (\(k1,k2) -> movingAverage samples k1 k2) 
+                    [(5, 5), (10, 10), (15, 15)]
+    
+    mapM_ (uncurry plotToCsv) $ 
+        zip ["MAverage5", "MAverage10", "MAverage15"] mas
    
     -- Calc convolution for window size of 10ms, and generate CSV file
     let cvs = convolute (VU.fromList samples) 10
@@ -46,7 +50,7 @@ main = do
     let md = magnitude (VU.fromList samples) 30
     plotToCsv "Magnitude" (VU.toList md)
 
-    -- Calc short term ZCR for 30s, and generate CSV file
+    -- Calc short term ZCR for 30ms, and generate CSV file
     let zcr = zeroCrossingRate (VU.fromList samples) 30
     plotToCsv "ZeroCrossingRate" (VU.toList zcr)
     

@@ -66,19 +66,21 @@ main = do
     let avgZCR = averageSig samples win_sz_ms zeroCrossingRate
     writeDat "avg_zcr" avgZCR
     
-    let speechClassifiers = [logAverageSig speechSamples win_sz_ms energy,
-                         logAverageSig speechSamples win_sz_ms magnitude,
-                         averageSig speechSamples win_sz_ms zeroCrossingRate]
+    let speechVars = [logAverageSig speechSamples win_sz_ms energy,
+                      logAverageSig speechSamples win_sz_ms magnitude,
+                      averageSig speechSamples win_sz_ms zeroCrossingRate]
 
     let speechData = map (\d -> (d, Speech)) $ transpose speechClassifiers
     
-    let silenceClassifiers = [logAverageSig silenceSamples win_sz_ms energy,
-                         logAverageSig silenceSamples win_sz_ms magnitude,
-                         averageSig silenceSamples win_sz_ms zeroCrossingRate]
+    let silenceVars = [logAverageSig silenceSamples win_sz_ms energy,
+                       logAverageSig silenceSamples win_sz_ms magnitude,
+                       averageSig silenceSamples win_sz_ms zeroCrossingRate]
 
-    let silenceData = map (\d -> (d, Silence)) $ transpose silenceClassifiers
+    let silenceData = map (\d -> (d, Silence)) $ 
+            transpose silenceVars
 
-    -- Randomly split speech and silence data into 10 equally sized disjoint subsets
+    -- Randomly split speech and silence data into 
+    -- 10 equally sized disjoint subsets
     speechSplits <- splitK speechData 10
     silenceSplits <- splitK silenceData 10
 

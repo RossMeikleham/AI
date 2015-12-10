@@ -53,12 +53,14 @@ gaussianDiscriminant mu var x = - log(sqrt(2 * pi * var)) -
 
 
 
--- Calculates the log of the discriminant function for a given SoundType decision.
+-- Calculates the log of the discriminant function 
+-- for a given SoundType decision.
 probability :: SoundType -> [SampleData] -> ([Double] -> Double)
 probability st trainData values = sum predictors
     where
          predictors :: [Double]
-         predictors = map (\(m, v, vals) -> gaussianDiscriminant m v c) $ zip3 means vars values
+         predictors = map (\(m, v, vals) -> 
+                        gaussianDiscriminant m v c) $ zip3 means vars values
          
          means :: [Double]
          means = map mean classSamples
@@ -68,16 +70,21 @@ probability st trainData values = sum predictors
          
          -- Get the sample data which is of the given SoundType
          classSamples :: [[Double]]
-         classSamples = transpose $ map fst $ filter (\(values, st') -> st == st') trainData
+         classSamples = transpose $ map fst $ 
+                            filter (\(values, st') -> st == st') trainData
 
 
 -- Calculate average loss over the test set after training gaussian
 -- discriminant functions with the train set.
 averageLoss :: [SampleData] -> [SampleData] -> Double
-averageLoss trainData testData = (sum $ map (uncurry loss . predict) testData) / (fromIntegral $ length testData)
+averageLoss trainData testData = 
+    (sum $ map (uncurry loss . predict) testData) / (
+                fromIntegral $ length testData)
+
     where
         classPredictors :: [(SoundType, [Double] -> Double)]
-        classPredictors = map (\st -> (st, generatePredictor st trainData)) [Speech, Silence]
+        classPredictors = map (\st -> (st, generatePredictor st trainData)) 
+                                [Speech, Silence]
 
         predict :: SampleData -> (SoundType, SoundType)
         predict (features, st) = (predictSt, st)
@@ -88,33 +95,47 @@ averageLoss trainData testData = (sum $ map (uncurry loss . predict) testData) /
                                                   then (st2, p2)
                                                   else (st1, p1)
                        ) $ 
-                       map (\(st', predictFn) -> (st', predictFn features)) classPredictors 
+                       map (\(st', predictFn) -> 
+                            (st', predictFn features)) classPredictors 
 
 
--- Calculate Average loss using cross validation given all test/training sets
+-- Calculate Average loss using cross validation given 
+-- all test/training sets
 cvAverageLoss :: [([SampleData], [SampleData])] -> Double
 cvAverageLoss sets = 
-    (sum $ map (\(trainData, testData) -> averageLoss trainData testData) sets) /
-    (fromIntegral $ length sets)
+    (sum $ map (\(trainData, testData) -> 
+            averageLoss trainData testData) sets) /
+                (fromIntegral $ length sets)
 
 
 -- Given a list of signals, a window length and a function which
--- takes a list of signals and that window lenth and transforms the signal;
--- this function takes the average of the transformation on the signals
-averageSig :: [[Int]] -> Int -> (VU.Vector Int -> Int -> VU.Vector Double) -> [Double]
+-- takes a list of signals and that window lenth and transforms the 
+-- signal; this function takes the average of the transformation on 
+-- the signals
+averageSig :: [[Int]] -> Int -> (VU.Vector Int -> Int -> 
+                                    VU.Vector Double) -> [Double]
 averageSig signals ms f = avg_f_signals
-    where f_signals = map (\m -> f (VU.fromList m) ms ) signals -- Apply transformation
-          sum_f_signals = map (VU.foldl' (+) 0) f_signals -- Sum signals
-          avg_f_signals = map (/ (fromIntegral $ length signals)) sum_f_signals -- Average signals
+    where f_signals = 
+            map (\m -> f (VU.fromList m) 
+                ms ) signals -- Apply transformation
+         
+          sum_f_signals = 
+            map (VU.foldl' (+) 0) f_signals -- Sum signals
+         
+          avg_f_signals = 
+            map (/ (fromIntegral $ length signals)) 
+                sum_f_signals -- Average signals
 
 
 -- Given a list of list of signals, a window length and a function which
 -- takes a list of signals and that window lenth and transforms the signal;
 -- this function takes the log of the average of the transformation on the
 -- signals
-logAverageSig :: [[Int]] -> Int -> (VU.Vector Int -> Int -> VU.Vector Double) -> [Double]
+logAverageSig :: [[Int]] -> Int ->  
+        (VU.Vector Int -> Int -> VU.Vector Double) -> [Double]
+
 logAverageSig signals ms f = log_avg_f_sig
-    where log_avg_f_sig = map log $ averageSig signals ms f -- Take log of signals
+    where log_avg_f_sig = map log $ averageSig signals ms f 
 
 
 -- Removes kth element from given list, throws an error
@@ -152,7 +173,9 @@ splitK :: [a] -> Int -> IO [[a]]
 splitK [] _ = error "splitK: given list is empty"
 splitK xs k = 
     if length xs `mod` k /= 0 
-        then error $ "splitK: " ++ show k ++ " does not divide " ++ show (length xs)
+        then error $ "splitK: " ++ show k ++ " does not divide " ++ 
+                        show (length xs)
+
         else splitK' ([], xs) k
 
     where 

@@ -15,8 +15,9 @@ def positiveNormalise(data, minV = None, maxV = None):
 
     return [normaliseItem(i) for i in data]
 
-# Normalise a list of samples between 1.0 and -1.0 if samples vary between 
-# positive and negative, otherwise normalises samples between 1.0 and 0.0
+# Normalise a list of samples between 1.0 and -1.0 if 
+# samples vary betweenpositive and negative, otherwise 
+# normalises samples between 1.0 and 0.0
 def normalise(data, minV = None, maxV = None):
     
     if minV is None:
@@ -54,11 +55,23 @@ def plotGraphs(plots, minY = None, maxY = None):
 
 
 def plotData():
-    plotData = [{"fileName": "Laboratory.csv", "color":"red", "label":"Original Signal"},
-                {"fileName": "Energy.csv", "color":"green", "label":"Energy 30ms"},
-                {"fileName": "Magnitude.csv", "color":"blue", "label":"Magnitude 30ms"},
-                {"fileName": "ZeroCrossingRate.csv", "color":"cyan", "label":"Zero Crossing Rate 30ms"}
-                ]
+    plotData =
+         [{"fileName": "Laboratory.csv", 
+           "color":"red", 
+           "label":"Original Signal"},
+
+           {"fileName": "Energy.csv", 
+            "color":"green", 
+            "label":"Energy 30ms"},
+
+           {"fileName": "Magnitude.csv", 
+            "color":"blue", 
+            "label":"Magnitude 30ms"},
+
+           {"fileName": "ZeroCrossingRate.csv", 
+            "color":"cyan", 
+            "label":"Zero Crossing Rate 30ms"}
+         ]
     
     plotGraphs(plotData)
     pl.title('Functions applied to Samples')
