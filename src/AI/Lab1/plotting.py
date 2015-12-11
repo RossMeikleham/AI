@@ -2,6 +2,8 @@
 import matplotlib.pyplot as pl
 import numpy as np
 
+ax = pl.subplot(111)
+
 # Normalise a list of samples between 1.0 and 0.0
 def positiveNormalise(data, minV = None, maxV = None):
     if minV is None:
@@ -47,16 +49,111 @@ def plotGraphs(plots, minY = None, maxY = None):
         dxs = data[:,0]
         dys = data[:,1]
 
-        pl.plot(dxs, normalise(dys, minY, maxY), 
+        ax.plot(dxs, normalise(dys, minY, maxY), 
             color = plot["color"], label = plot["label"])
+                
         
-        
+ 
+def plotIdealDelay():
+    
+    plotsData = [{"fileName": "Laboratory.csv", 
+		  "color": "red", 
+		  "label": "Signal"},
+
+                 {"fileName": "Delay5.csv", 
+		  "color": "green", 
+		  "label": "5ms Window"},
+
+                 {"fileName": "Delay10.csv", 
+		  "color": "blue", 
+		  "label": "10ms Window"},
+
+                 {"fileName": "Delay15.csv", 
+		  "color": "black", 
+		  "label": "15ms Window"}
+                 ]
+
+    plotGraphs(plotsData)
+
+    pl.title('Ideal Delay')
+    pl.ylabel("Normalised S[n]")
+    pl.xlabel("Time in Milliseconds")
+   
+    pl.grid(True)
+    #Place the legend
+    box = ax.get_position()
+    ax.legend(loc = 'center left', bbox_to_anchor=(1, 0.5))
+    
+    pl.savefig('idealDelay.png', bbox_inches='tight')
 
 
 
-def plotData():
-    plotData =
-         [{"fileName": "Laboratory.csv", 
+
+
+def plotMovingAverage():
+    
+    plotsData = [{"fileName": "Laboratory.csv", 
+		  "color": "red", 
+		  "label": "Signal"},
+
+                 {"fileName": "MAverage5.csv", 
+		  "color": "green", 
+		  "label": "MA 5ms"},
+
+                 {"fileName": "MAverage10.csv", 
+		  "color": "blue", 
+		  "label": "MA 10ms"},
+
+                 {"fileName": "MAverage15.csv", 
+		  "color": "black", 
+		  "label": "MA 15ms"}
+                ]
+    
+    plotGraphs(plotsData)
+
+    pl.title('Moving Average')
+    pl.ylabel("Normalised S[n]")
+    pl.xlabel("Time in Milliseconds")
+
+    pl.grid(True)
+    
+    #Place the legend
+    box = ax.get_position()
+    ax.legend(loc = 'center left', bbox_to_anchor=(1, 0.5))
+    
+    pl.savefig('movingAverage.png', bbox_inches='tight')
+
+
+
+def plotConvolution():
+     
+    plotData = [{"fileName": "Convolution.csv", 
+	         "color": "red", 
+		 "label": "Signal"}]
+		
+
+    plotGraphs(plotData)
+
+    pl.title('Convolution')
+    pl.ylabel("Normalised y[n]")
+    pl.xlabel("Time in Milliseconds")
+
+    plotGraphs(plotData)
+    pl.title('Functions applied to Samples')
+    pl.xlabel("Time ms")
+    pl.ylabel("Normalised signals S[n]")
+    pl.grid(True)
+
+    
+    pl.savefig('convolution.png', bbox_inches='tight')
+    pl.legend()
+ 
+ 
+
+
+
+def plotMultiple():
+    plotData = [{"fileName": "Laboratory.csv", 
            "color":"red", 
            "label":"Original Signal"},
 
@@ -70,7 +167,7 @@ def plotData():
 
            {"fileName": "ZeroCrossingRate.csv", 
             "color":"cyan", 
-            "label":"Zero Crossing Rate 30ms"}
+            "label":"Zero Crossing Rate\n 30ms"}
          ]
     
     plotGraphs(plotData)
@@ -78,11 +175,22 @@ def plotData():
     pl.xlabel("Time ms")
     pl.ylabel("Normalised signals S[n]")
     pl.grid(True)
-    pl.legend()
-    pl.show()
+    
+    #Place the legend
+    box = ax.get_position()
+    #ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+    ax.legend(loc = 'center left', bbox_to_anchor=(1, 0.5))
+    
+    pl.savefig('signals.svg', bbox_inches='tight')
 
 
 def main():
-    plotData()
+    plotIdealDelay()
+    ax.clear()
+    plotMovingAverage()
+    ax.clear()
+    plotConvolution()
+    ax.clear()
+    plotMultiple()
 
 main()

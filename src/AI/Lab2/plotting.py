@@ -12,18 +12,19 @@ def main():
     pl.title("Energy against Magnitude")
     pl.xlabel("Log average of energy")
     pl.ylabel("Log average of magnitudes")
-    pl.show()
+    pl.savefig("eam.png", bbox_inches='tight')
     
     pl.scatter(energies, zcrs, color = "red")
     pl.title("Energy against Zero Crossing Rate")
     pl.xlabel("Log of Average of Energy")
     pl.ylabel("Average Zero Crossing Rate")
-    pl.show()
+    pl.savefig("eac.png", bbox_inches='tight')
+
 
     pl.scatter(magnitudes, zcrs, color = "red")
     pl.title("Magnitude against Zero Crossing Rate")
     pl.xlabel("Log of average of Magnitudes")
     pl.ylabel("Average of Zero Crossing Rates")
-    pl.show()
+    pl.savefig("maz.png", bbox_inches='tight')
 
 main()
