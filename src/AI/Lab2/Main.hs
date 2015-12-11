@@ -70,7 +70,8 @@ main = do
                       logAverageSig speechSamples win_sz_ms magnitude,
                       averageSig speechSamples win_sz_ms zeroCrossingRate]
 
-    let speechData = map (\d -> (d, Speech)) $ transpose speechClassifiers
+    let speechData = map (\d -> (d, Speech)) $ 
+            transpose speechVars
     
     let silenceVars = [logAverageSig silenceSamples win_sz_ms energy,
                        logAverageSig silenceSamples win_sz_ms magnitude,

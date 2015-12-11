@@ -60,7 +60,7 @@ probability st trainData values = sum predictors
     where
          predictors :: [Double]
          predictors = map (\(m, v, vals) -> 
-                        gaussianDiscriminant m v c) $ zip3 means vars values
+                        gaussianDiscriminant m v vals) $ zip3 means vars values
          
          means :: [Double]
          means = map mean classSamples
@@ -83,7 +83,7 @@ averageLoss trainData testData =
 
     where
         classPredictors :: [(SoundType, [Double] -> Double)]
-        classPredictors = map (\st -> (st, generatePredictor st trainData)) 
+        classPredictors = map (\st -> (st, probability st trainData)) 
                                 [Speech, Silence]
 
         predict :: SampleData -> (SoundType, SoundType)
