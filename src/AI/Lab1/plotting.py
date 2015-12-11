@@ -181,7 +181,7 @@ def plotMultiple():
     #ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     ax.legend(loc = 'center left', bbox_to_anchor=(1, 0.5))
     
-    pl.savefig('signals.svg', bbox_inches='tight')
+    pl.savefig('signals.png', bbox_inches='tight')
 
 
 def main():

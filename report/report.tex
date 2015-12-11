@@ -38,15 +38,27 @@
 
 \section{Chapter 1 - Design}
 
-
-\textbf{PEAS}
 \begin{itemize}
-\item \textbf{Performance} 
-\item \textbf{Environment} 
-\item \textbf{Sensors} 
-\item \textbf{Actuators} 
+\item \textbf{Performance} \- A metric used to tell how "well" the intelligent agent
+is performing, it can also be described as a criteria for success. 
+\item \textbf{Environment} \- An environment can be through of as a state in which
+the agent can percieve data from as well as changing its state by acting upon it. 
+An environment may be static, or change over time (dynamic), An environment can contain other agents (Multiagent environment).
+An environment also limits the circumstances the agent can deal with.  
+\item \textbf{Sensors} \- How the intelligent agent percieves its environment 
+\item \textbf{Actuators} \- Actuators let the intelligent agent act on its environment.
 \end{itemize}
 
+In the laboratory experiment the PEAS terms are:
+\begin{itemize}
+\item \textbf{Performance} \- Average loss when predicting the class the data belongs to must
+be below a certain percentage.
+\item \textbf{Environment} \- Audio samples
+\item \textbf{Sensors} \- Reading short term energy and magnitude signals, as well as
+zero crossing rate from the audio data.
+\item \textbf{Actuators} \-  Generates discriminant functions to be able
+to predict whether the audio contains voice, or is silent. 
+\end{itemize}
 
 \section{Chapter 2 - Theory}
 
@@ -88,7 +100,12 @@ equation:
 \end{equation}
 
 
-Implementing this and calculating the window size
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{images/energy.png}
+\caption{Plot of Energy on a 300ms sample}
+\end{center}
+\end{figure}
 
 
 
@@ -108,6 +125,12 @@ magnitude with the rectangular window using the following equation:
 \end{equation}
 
 
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{images/magnitude.png}
+\caption{Plot of Magnitude on a 300ms sample}
+\end{center}
+\end{figure}
 
 \subsubsection{Extracting Zero Crossing Rate}
 
@@ -136,6 +159,23 @@ ZCR with the rectangular window using the following equation:
 \begin{equation}
  E[n] = \frac{1}{2N}\sum_{k=n-K+1}^{N}|sign(s[k] - sign(s[k-1]])|.w[n-k]
 \end{equation}
+
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{images/zcr.png}
+\caption{Plot of ZCR on a 300ms sample}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{images/signals.png}
+\caption{Energy, Magnitude, ZCR, all plotted at once }
+\end{center}
+\end{figure}
+
 
 
 \subsection{Decisions}
@@ -200,7 +240,6 @@ and then plot them against each other; resulting in the following graphs:
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../src/AI/Lab2/eam.png}
-\caption{.}
 \label{plot1}
 \end{center}
 \end{figure}
@@ -209,7 +248,6 @@ and then plot them against each other; resulting in the following graphs:
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../src/AI/Lab2/eac.png}
-\caption{.}
 \label{plot2}
 \end{center}
 \end{figure}
@@ -218,7 +256,6 @@ and then plot them against each other; resulting in the following graphs:
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth, height=\textheight, keepaspectratio]{../src/AI/Lab2/maz.png}
-\caption{.}
 \label{plot3}
 \end{center}
 \end{figure}
